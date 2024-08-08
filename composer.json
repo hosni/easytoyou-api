@@ -1,0 +1,44 @@
+{
+    "name": "hosni/easytoyou-api",
+    "description": "A simple stupid API to easytoyou.eu that automates files decoding process.",
+    "type": "library",
+    "require": {
+        "guzzlehttp/guzzle": "^7.0",
+        "paquettg/php-html-parser": "^2.2"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Hosni\\EasytoyouApi\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Hossein Hosni",
+            "homepage": "https://github.com/hosni"
+        }
+    ],
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.62",
+        "phpstan/phpstan": "^1.11"
+    },
+    "scripts": {
+        "phpstan": "@php ./vendor/bin/phpstan",
+        "php-cs-fixer": "@php ./vendor/bin/php-cs-fixer",
+        "test:composer": "@composer validate --strict",
+        "test:lint": "@phpstan analyze",
+        "test:codestyle": "@php-cs-fixer fix -v --dry-run --using-cache=no",
+        "test:codestyle:fix": "@php-cs-fixer fix -v --using-cache=no",
+        "test": [
+            "@test:composer",
+            "@test:lint",
+            "@test:codestyle"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
