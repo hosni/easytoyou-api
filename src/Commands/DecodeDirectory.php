@@ -177,6 +177,10 @@ class DecodeDirectory extends Command
 
         foreach ($results as $result) {
             if ($manifestFile) { // @phpstan-ignore-line
+                $manifestDirectory = dirname($manifestFile);
+                if (!is_dir($manifestDirectory)) {
+                    mkdir($manifestDirectory, 0755, true);
+                }
                 file_put_contents(
                     $manifestFile,
                     json_encode($result, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).PHP_EOL,
