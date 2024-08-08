@@ -12,6 +12,7 @@ $container = Container::getInstance();
 $container->singleton(Application::class, function (Container $container): Application {
     $app = new Application();
     $app->add(new Commands\DecodeDirectory($container));
+    $app->add(new Commands\DecodeFile($container));
 
     return $app;
 });
