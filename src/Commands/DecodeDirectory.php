@@ -99,7 +99,7 @@ class DecodeDirectory extends Command
                 if ('php' != $file->getExtension()) {
                     continue;
                 }
-                echo "Should decode file: {$file->getPathname()}? ";
+                echo "Should decode file: {$file->getPathname()} ? ";
                 if (!$this->shouldDecodeFile($file, $srcDirectoryPath, $dstDirectoryPath)) {
                     echo "No" . PHP_EOL;
                     continue;
@@ -128,13 +128,12 @@ class DecodeDirectory extends Command
         /** @var string|null */
         $manifestFile = $input->getOption('manifest-file');
         if (!$manifestFile) {
-            $manifestFile = '/home/hosni/w/easytoyou-manifest.json';
-            // $manifestFile = rtrim($dstDirectoryPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'easytoyou-manifest.json';
+            $manifestFile = rtrim($dstDirectoryPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'easytoyou-manifest.json';
         }
 
         static $tries = 0;
         try {
-            echo 'decodeMulti:'.PHP_EOL;
+            echo 'decodeMulti:'. json_encode($files, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) .PHP_EOL;
             $results = $api->decodeMulti($files);
             var_dump($results);
             foreach ($results as $result) {
