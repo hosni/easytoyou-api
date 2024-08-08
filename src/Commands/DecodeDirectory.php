@@ -181,9 +181,11 @@ class DecodeDirectory extends Command
                     @unlink($destFilePath);
                 }
             }
+
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     protected function calculateDestFilePath(\SplFileInfo $file, string $srcDirectoryPath, string $dstDirectoryPath): string
