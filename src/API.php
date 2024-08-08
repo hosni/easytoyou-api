@@ -39,7 +39,7 @@ class API
     {
         if (!$this->decoder) {
             $this->decoder = $this->account ?
-                new Ic11Php74($this->client, $this->account) :
+                new Ic11Php74($this->client) :
                 new DemoPhp74($this->client);
         }
 

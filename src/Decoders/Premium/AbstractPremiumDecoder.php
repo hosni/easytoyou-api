@@ -2,7 +2,6 @@
 
 namespace Hosni\EasytoyouApi\Decoders\Premium;
 
-use Hosni\EasytoyouApi\Account\Account;
 use Hosni\EasytoyouApi\Decoders\DecodeResult;
 use Hosni\EasytoyouApi\Decoders\DecoderTrait;
 use Hosni\EasytoyouApi\Decoders\IPremiumDecoder;
@@ -14,7 +13,7 @@ abstract class AbstractPremiumDecoder implements IPremiumDecoder
 
     protected static ?string $fileInputName = null;
 
-    public function __construct(protected HttpClient $client, protected Account $account)
+    public function __construct(protected HttpClient $client)
     {
     }
 

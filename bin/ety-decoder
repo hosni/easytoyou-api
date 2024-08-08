@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+namespace Hosni\EasytoyouApi;
+
+use Symfony\Component\Console\Application;
+
+if (is_dir( __DIR__ . "/../vendor")) {
+	require_once __DIR__ . "/../vendor/autoload.php";
+} else {
+	require_once __DIR__ . "/../autoload.php";
+}
+
+
+$container = require_once dirname(__DIR__) . "/bootstrap/app.php";
+$app = $container->make(Application::class);
+$app->run();

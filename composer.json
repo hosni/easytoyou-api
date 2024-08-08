@@ -4,6 +4,9 @@
     "type": "library",
     "require": {
         "guzzlehttp/guzzle": "^7.0",
+        "symfony/console": "^5.0",
+        "illuminate/container": "^5.4",
+		"webignition/php-path-resolver": "^0.4.0",
         "paquettg/php-html-parser": "^2.2"
     },
     "license": "MIT",
