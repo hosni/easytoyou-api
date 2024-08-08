@@ -38,6 +38,9 @@
             "@test:codestyle"
         ]
     },
+    "bin": [
+        "bin/ety-decoder"
+    ],
     "config": {
         "sort-packages": true,
         "optimize-autoloader": true
