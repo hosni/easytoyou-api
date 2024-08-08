@@ -2,10 +2,12 @@
 
 namespace Hosni\EasytoyouApi\Commands;
 
+use GuzzleHttp\Exception\RequestException;
 use Hosni\EasytoyouApi\Account\Account;
 use Hosni\EasytoyouApi\API;
 use Hosni\EasytoyouApi\Decoders\Premium\Ic11Php74;
 use Hosni\EasytoyouApi\HttpClient;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -27,6 +29,8 @@ class DecodeDirectory extends Command
         $this->addArgument('--dest', InputArgument::OPTIONAL, 'The dest directory to store');
 
         $this->addOption('--watch', 'w', InputArgument::REQUIRED, 'Should watch for new files?');
+
+        $this->addOption('--async-dl', null, InputArgument::REQUIRED, 'Should download results async?');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -36,6 +40,11 @@ class DecodeDirectory extends Command
         $shouldWatchForNewFiles = $input->hasParameterOption(['--watch', '-w'], true);
         if ($shouldWatchForNewFiles) {
             echo 'Run on watch mode!'.PHP_EOL;
+        }
+
+        $asyncDownload = $input->hasParameterOption(['--async-dl'], true);
+        if ($asyncDownload) {
+            echo 'Download mode: async!'.PHP_EOL;
         }
 
         /** @var int|null $chunkSize */
@@ -133,50 +142,107 @@ class DecodeDirectory extends Command
      */
     protected function decodeFiles(InputInterface $input, API $api, array $files, string $srcDirectoryPath, string $dstDirectoryPath): void
     {
+        static $tries = 0;
+        try {
+            echo 'decodeMulti:'.json_encode($files, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).PHP_EOL;
+            $results = $api->decodeMulti($files);
+            var_dump($results);
+            $this->processResults($input, $api, $results, $srcDirectoryPath, $dstDirectoryPath);
+        } catch (\Exception $e) {
+            if (++$tries < 3) {
+                $this->decodeFiles($input, $api, $files, $srcDirectoryPath, $dstDirectoryPath);
+            } else {
+                $tries = 0;
+            }
+        }
+    }
+
+    /**
+     * @param \Hosni\EasytoyouApi\Decoders\DecodeResult[] $results
+     */
+    protected function processResults(InputInterface $input, API $api, array $results, string $srcDirectoryPath, string $dstDirectoryPath): void
+    {
         /** @var string|null */
         $manifestFile = $input->getOption('manifest-file');
         if (!$manifestFile) {
             $manifestFile = rtrim($dstDirectoryPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'easytoyou-manifest.json';
         }
 
-        static $tries = 0;
-        try {
-            echo 'decodeMulti:'.json_encode($files, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).PHP_EOL;
-            $results = $api->decodeMulti($files);
-            var_dump($results);
-            foreach ($results as $result) {
-                if ($manifestFile) { // @phpstan-ignore-line
-                    file_put_contents(
-                        $manifestFile,
-                        json_encode($result, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).PHP_EOL,
-                        FILE_APPEND | LOCK_EX
-                    );
-                }
-                if (!$result->getDecodedFileUrl()) {
-                    echo PHP_EOL.PHP_EOL.
-                        'Can not decode: '.$result->getEncodedFile()->getPathname().
-                    PHP_EOL.PHP_EOL;
-                    continue;
-                }
-                $sinkPath = $this->calculateDestFilePath($result->getEncodedFile(), $srcDirectoryPath, $dstDirectoryPath);
-                $sinkPathDirectory = dirname($sinkPath);
-                if (!is_dir($sinkPathDirectory)) {
-                    mkdir($sinkPathDirectory, 0755, true);
-                }
+        $asyncDownload = $input->hasParameterOption(['--async-dl'], true);
+        if ($asyncDownload) {
+            echo 'Prepare to async download!'.PHP_EOL;
+        }
 
+        $promises = [];
+
+        foreach ($results as $result) {
+            if ($manifestFile) { // @phpstan-ignore-line
+                file_put_contents(
+                    $manifestFile,
+                    json_encode($result, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).PHP_EOL,
+                    FILE_APPEND | LOCK_EX
+                );
+            }
+
+            if (!$result->getDecodedFileUrl()) {
+                echo PHP_EOL.PHP_EOL.
+                    'Can not decode: '.$result->getEncodedFile()->getPathname().
+                PHP_EOL.PHP_EOL;
+                continue;
+            }
+
+            $sinkPath = $this->calculateDestFilePath($result->getEncodedFile(), $srcDirectoryPath, $dstDirectoryPath);
+            $sinkPathDirectory = dirname($sinkPath);
+            if (!is_dir($sinkPathDirectory)) {
+                mkdir($sinkPathDirectory, 0755, true);
+            }
+
+            if ($asyncDownload) {
                 echo PHP_EOL.$result->getEncodedFile()->getPathname().PHP_EOL.
-                    "-> Downloding: {$result->getDecodedFileUrl()} to {$sinkPath}".PHP_EOL.PHP_EOL;
-                $api->getHttpClient()->get(
+                    "-> Prepare to async download: {$result->getDecodedFileUrl()} to {$sinkPath}".PHP_EOL.PHP_EOL;
+
+                $promise = $api->getHttpClient()->getAsync(
                     $result->getDecodedFileUrl(), [
                         'sink' => $sinkPath,
                     ]
                 );
-            }
-        } catch (\Exception $e) {
-            if (++$tries < 3) {
-                $this->decodeFiles($input, $api, $files, $srcDirectoryPath, $dstDirectoryPath);
+                $promise->then(
+                    function (ResponseInterface $res) use (&$result, &$sinkPath) {
+                        echo PHP_EOL.$result->getEncodedFile()->getPathname().PHP_EOL.
+                            "-> downloaded: {$result->getDecodedFileUrl()} to {$sinkPath} with status: {$res->getStatusCode()}".PHP_EOL.PHP_EOL;
+                    },
+                    function (RequestException $e) {
+                        echo $e->getMessage()."\n";
+                        echo $e->getRequest()->getMethod();
+                    }
+                );
+                $promises[$sinkPath] = $promise;
             } else {
-                $tries = 0;
+                echo PHP_EOL.$result->getEncodedFile()->getPathname().PHP_EOL.
+                    "-> Downloding: {$result->getDecodedFileUrl()} to {$sinkPath}".PHP_EOL.PHP_EOL;
+
+                static $singleModeTries = 0;
+                try {
+                    $api->getHttpClient()->get(
+                        $result->getDecodedFileUrl(), [
+                            'sink' => $sinkPath,
+                        ]
+                    );
+                } catch (\Exception $e) {
+                    if (++$singleModeTries < 3) {
+                        $this->processResults($input, $api, [$result], $srcDirectoryPath, $dstDirectoryPath);
+                    }
+                }
+            }
+        }
+        if ($asyncDownload && $promises) {
+            static $asyncModeTries = 0;
+            try {
+                \GuzzleHttp\Promise\Utils::unwrap($promises);
+            } catch (\Exception $e) {
+                if (++$asyncModeTries < 3) {
+                    $this->processResults($input, $api, $results, $srcDirectoryPath, $dstDirectoryPath);
+                }
             }
         }
     }
