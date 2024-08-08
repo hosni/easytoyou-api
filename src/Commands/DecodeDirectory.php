@@ -101,10 +101,10 @@ class DecodeDirectory extends Command
                 }
                 echo "Should decode file: {$file->getPathname()} ? ";
                 if (!$this->shouldDecodeFile($file, $srcDirectoryPath, $dstDirectoryPath)) {
-                    echo "No" . PHP_EOL;
+                    echo 'No'.PHP_EOL;
                     continue;
                 }
-                echo "Yes" . PHP_EOL;
+                echo 'Yes'.PHP_EOL;
 
                 $chunkedFiles[] = $file;
                 if (count($chunkedFiles) > 4) {
@@ -128,12 +128,12 @@ class DecodeDirectory extends Command
         /** @var string|null */
         $manifestFile = $input->getOption('manifest-file');
         if (!$manifestFile) {
-            $manifestFile = rtrim($dstDirectoryPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'easytoyou-manifest.json';
+            $manifestFile = rtrim($dstDirectoryPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'easytoyou-manifest.json';
         }
 
         static $tries = 0;
         try {
-            echo 'decodeMulti:'. json_encode($files, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) .PHP_EOL;
+            echo 'decodeMulti:'.json_encode($files, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).PHP_EOL;
             $results = $api->decodeMulti($files);
             var_dump($results);
             foreach ($results as $result) {

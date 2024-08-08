@@ -83,7 +83,7 @@ trait DecoderTrait
                 $failedToDecode = true;
             }
             foreach ($files as $file) {
-                if (str_starts_with($line, $file->getFilename())) {
+                if (str_starts_with($line, sha1_file($file->getPathname()).'.'.$file->getExtension())) {
                     if ($failedToDecode) {
                         $results[$file->getPathname()] = DecodeResult::make(
                             $file,

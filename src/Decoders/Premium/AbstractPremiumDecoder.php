@@ -36,7 +36,7 @@ abstract class AbstractPremiumDecoder implements IPremiumDecoder
                 array_map(fn (\SplFileInfo $file): array => [
                     'name' => $this->getFileInputName(),
                     'contents' => $file->openFile(),
-                    'filename' => $file->getFilename(),
+                    'filename' => sha1_file($file->getPathname()).'.'.$file->getExtension(),
                 ], $files),
                 [
                     [
