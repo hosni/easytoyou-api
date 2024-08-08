@@ -83,7 +83,7 @@ trait DecoderTrait
                 $failedToDecode = true;
             }
             foreach ($files as $file) {
-                if (str_starts_with($line, sha1_file($file->getPathname()).'.'.$file->getExtension())) {
+                if (str_starts_with($line, $this->generateUniqFileName($file))) {
                     if ($failedToDecode) {
                         $results[$file->getPathname()] = DecodeResult::make(
                             $file,
@@ -104,5 +104,10 @@ trait DecoderTrait
         }
 
         return $results;
+    }
+
+    protected function generateUniqFileName(\SplFileInfo $file): string
+    {
+        return sha1_file($file->getPathname()).'_'.$file->getFilename();
     }
 }
