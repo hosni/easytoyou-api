@@ -58,6 +58,9 @@ class DecodeDirectory extends Command
         $srcDirectoryPath = $input->getArgument('--src');
         /** @var string|null $dstDirectoryPath */
         $dstDirectoryPath = $input->getArgument('--dest');
+        if (!$dstDirectoryPath) {
+            $dstDirectoryPath = rtrim($srcDirectoryPath, DIRECTORY_SEPARATOR).'-decoded';
+        }
         if (!$srcDirectoryPath || !$dstDirectoryPath) {
             throw new \Exception('You should pass --src and --dest paths.');
         }
