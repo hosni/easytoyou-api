@@ -99,9 +99,13 @@ class DecodeDirectory extends Command
                 if ('php' != $file->getExtension()) {
                     continue;
                 }
+                echo "Should decode file: {$file->getPathname()}? ";
                 if (!$this->shouldDecodeFile($file, $srcDirectoryPath, $dstDirectoryPath)) {
+                    echo "No" . PHP_EOL;
                     continue;
                 }
+                echo "Yes" . PHP_EOL;
+
                 $chunkedFiles[] = $file;
                 if (count($chunkedFiles) > 4) {
                     $this->decodeFiles($input, $api, $chunkedFiles, $srcDirectoryPath, $dstDirectoryPath);
