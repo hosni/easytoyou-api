@@ -20,6 +20,7 @@ class DecodeDirectory extends Command
     protected function configure(): void
     {
         parent::configure();
+        $this->addOption('--chunk-size', null, InputArgument::OPTIONAL, 'Size of each chunk that we send to easytoyou', 5);
         $this->addOption('--manifest-file', null, InputArgument::OPTIONAL, 'The manifest file path to store report');
         $this->addOption('--decoder', null, InputArgument::OPTIONAL, 'Default decoder to decode', Ic11Php74::class);
         $this->addArgument('--src', InputArgument::OPTIONAL, 'The source directory to look for ioncubed files');
@@ -36,6 +37,13 @@ class DecodeDirectory extends Command
         if ($shouldWatchForNewFiles) {
             echo 'Run on watch mode!'.PHP_EOL;
         }
+
+        /** @var int|null $chunkSize */
+        $chunkSize = (int) $input->getOption('chunk-size');
+        if ($chunkSize < 1) {
+            throw new \Exception('The --chunk-size should be greater that zero!');
+        }
+        echo 'Using chunk-size: '.$chunkSize.PHP_EOL;
 
         /** @var string|null $srcDirectoryPath */
         $srcDirectoryPath = $input->getArgument('--src');
@@ -107,7 +115,7 @@ class DecodeDirectory extends Command
                 echo 'Yes'.PHP_EOL;
 
                 $chunkedFiles[] = $file;
-                if (count($chunkedFiles) > 4) {
+                if (count($chunkedFiles) >= $chunkSize) {
                     $this->decodeFiles($input, $api, $chunkedFiles, $srcDirectoryPath, $dstDirectoryPath);
                     $chunkedFiles = [];
                 }
