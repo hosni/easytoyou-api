@@ -56,11 +56,13 @@ class DecodeDirectory extends Command
 
         /** @var string|null $srcDirectoryPath */
         $srcDirectoryPath = $input->getArgument('--src');
+
         /** @var string|null $dstDirectoryPath */
         $dstDirectoryPath = $input->getArgument('--dest');
         if (!$dstDirectoryPath) {
             $dstDirectoryPath = rtrim($srcDirectoryPath, DIRECTORY_SEPARATOR).'-decoded';
         }
+
         if (!$srcDirectoryPath || !$dstDirectoryPath) {
             throw new \Exception('You should pass --src and --dest paths.');
         }
@@ -150,6 +152,15 @@ class DecodeDirectory extends Command
             echo 'decodeMulti:'.json_encode($files, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).PHP_EOL;
             $results = $api->decodeMulti($files);
             var_dump($results);
+
+            // Dummy fix for easytoyou, they change the input file name to prevent bots
+            // So, if there is no result, it means we are posting to wrong input name
+            // By setting decoder on api, it will create new instance and again fetch the input name
+            // Then we retry!
+            if (!$results) {
+                $api->setDecoder(get_class($api->getDecoder()));
+                $this->decodeFiles($input, $api, $files, $srcDirectoryPath, $dstDirectoryPath);
+            }
             $this->processResults($input, $api, $results, $srcDirectoryPath, $dstDirectoryPath);
         } catch (\Exception $e) {
             if (++$tries < 3) {
