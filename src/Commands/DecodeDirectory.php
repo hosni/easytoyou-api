@@ -163,6 +163,7 @@ class DecodeDirectory extends Command
             }
             $this->processResults($input, $api, $results, $srcDirectoryPath, $dstDirectoryPath);
         } catch (\Exception $e) {
+            echo $e->__toString().PHP_EOL.PHP_EOL;
             if (++$tries < 3) {
                 $this->decodeFiles($input, $api, $files, $srcDirectoryPath, $dstDirectoryPath);
             } else {
@@ -247,6 +248,7 @@ class DecodeDirectory extends Command
                         ]
                     );
                 } catch (\Exception $e) {
+                    echo $e->__toString().PHP_EOL.PHP_EOL;
                     if (++$singleModeTries < 3) {
                         $this->processResults($input, $api, [$result], $srcDirectoryPath, $dstDirectoryPath);
                     }
@@ -258,6 +260,7 @@ class DecodeDirectory extends Command
             try {
                 \GuzzleHttp\Promise\Utils::unwrap($promises);
             } catch (\Exception $e) {
+                echo $e->__toString().PHP_EOL.PHP_EOL;
                 if (++$asyncModeTries < 3) {
                     $this->processResults($input, $api, $results, $srcDirectoryPath, $dstDirectoryPath);
                 }
